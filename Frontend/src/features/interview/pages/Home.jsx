@@ -8,22 +8,53 @@ const Home = () => {
     const { loading, generateReport,reports } = useInterview()
     const [ jobDescription, setJobDescription ] = useState("")
     const [ selfDescription, setSelfDescription ] = useState("")
+    const [ toast, setToast ] = useState(null)
+    const [ selectedFileName, setSelectedFileName ] = useState("")
     const resumeInputRef = useRef()
+    const toastTimerRef = useRef(null)
 
     const navigate = useNavigate()
 
-    const handleGenerateReport = async () => {
-        const resumeFile = resumeInputRef.current.files[ 0 ]
-        const data = await generateReport({ jobDescription, selfDescription, resumeFile })
-        navigate(`/interview/${data._id}`)
+    const showToast = (type, message) => {
+        setToast({ type, message })
+        window.clearTimeout(toastTimerRef.current)
+        toastTimerRef.current = window.setTimeout(() => setToast(null), 2500)
     }
 
-    if (loading) {
-        return (
-            <main className='loading-screen'>
-                <h1>Loading your interview plan...</h1>
-            </main>
-        )
+    const handleResumeChange = (event) => {
+        const file = event.target.files?.[0]
+        setSelectedFileName(file ? file.name : "")
+    }
+
+    const handleGenerateReport = async () => {
+        if (loading) return
+
+        const resumeFile = resumeInputRef.current?.files?.[0]
+
+        if (!jobDescription.trim()) {
+            showToast("error", "Please paste a job description first.")
+            return
+        }
+
+        if (!resumeFile && !selfDescription.trim()) {
+            showToast("error", "Upload a resume or add a self description.")
+            return
+        }
+
+        showToast("info", "Generating your interview strategy...")
+
+        const data = await generateReport({ jobDescription, selfDescription, resumeFile })
+
+        if (!data?._id) {
+            showToast("error", "Could not generate report. Please try again.")
+            return
+        }
+
+        showToast("success", "Report ready. Opening your interview plan...")
+
+        window.setTimeout(() => {
+            navigate(`/interview/${data._id}`)
+        }, 700)
     }
 
     return (
@@ -50,11 +81,13 @@ const Home = () => {
                         </div>
                         <textarea
                             onChange={(e) => { setJobDescription(e.target.value) }}
+                            value={jobDescription}
+                            disabled={loading}
                             className='panel__textarea'
                             placeholder={`Paste the full job description here...\ne.g. 'Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...'`}
                             maxLength={5000}
                         />
-                        <div className='char-counter'>0 / 5000 chars</div>
+                        <div className='char-counter'>{jobDescription.length} / 5000 chars</div>
                     </div>
 
                     {/* Vertical Divider */}
@@ -75,14 +108,15 @@ const Home = () => {
                                 Upload Resume
                                 <span className='badge badge--best'>Best Results</span>
                             </label>
-                            <label className='dropzone' htmlFor='resume'>
+                            <label className={`dropzone ${loading ? 'is-disabled' : ''}`} htmlFor='resume'>
                                 <span className='dropzone__icon'>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>
                                 </span>
                                 <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
                                 <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
-                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' />
+                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' onChange={handleResumeChange} disabled={loading} />
                             </label>
+                            {selectedFileName && <p className='selected-file'>Selected file: {selectedFileName}</p>}
                         </div>
 
                         {/* OR Divider */}
@@ -93,6 +127,8 @@ const Home = () => {
                             <label className='section-label' htmlFor='selfDescription'>Quick Self-Description</label>
                             <textarea
                                 onChange={(e) => { setSelfDescription(e.target.value) }}
+                                value={selfDescription}
+                                disabled={loading}
                                 id='selfDescription'
                                 name='selfDescription'
                                 className='panel__textarea panel__textarea--short'
@@ -115,12 +151,23 @@ const Home = () => {
                     <span className='footer-info'>AI-Powered Strategy Generation &bull; Approx 30s</span>
                     <button
                         onClick={handleGenerateReport}
-                        className='generate-btn'>
+                        className='generate-btn'
+                        disabled={loading}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" /></svg>
-                        Generate My Interview Strategy
+                        {loading ? 'Generating...' : 'Generate My Interview Strategy'}
                     </button>
                 </div>
             </div>
+
+            {loading && (
+                <p className='generation-status' aria-live='polite'>Generating your interview strategy. Please wait...</p>
+            )}
+
+            {toast && (
+                <div className={`toast toast--${toast.type}`} role="status" aria-live="polite">
+                    {toast.message}
+                </div>
+            )}
 
             {/* Recent Reports List */}
             {reports.length > 0 && (

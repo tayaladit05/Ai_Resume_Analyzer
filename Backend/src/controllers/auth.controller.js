@@ -3,6 +3,23 @@ const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const tokenBlacklistModel = require("../models/blacklist.model")
 
+const cookieSecure = process.env.COOKIE_SECURE
+    ? process.env.COOKIE_SECURE === "true"
+    : process.env.NODE_ENV === "production"
+
+const authCookieOptions = {
+    httpOnly: true,
+    secure: cookieSecure,
+    sameSite: process.env.COOKIE_SAME_SITE || (cookieSecure ? "none" : "lax"),
+    maxAge: 24 * 60 * 60 * 1000
+}
+
+const clearCookieOptions = {
+    httpOnly: true,
+    secure: authCookieOptions.secure,
+    sameSite: authCookieOptions.sameSite
+}
+
 /**
  * @name registerUserController
  * @description register a new user, expects username, email and password in the request body
@@ -42,7 +59,7 @@ async function registerUserController(req, res) {
         { expiresIn: "1d" }
     )
 
-    res.cookie("token", token)
+    res.cookie("token", token, authCookieOptions)
 
 
     res.status(201).json({
@@ -74,7 +91,21 @@ async function loginUserController(req, res) {
         })
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password)
+    const isBcryptHash = /^\$2[aby]\$\d{2}\$/.test(user.password)
+
+    let isPasswordValid = false
+
+    if (isBcryptHash) {
+        isPasswordValid = await bcrypt.compare(password, user.password)
+    } else {
+        // Backward compatibility for users inserted manually with plain passwords.
+        isPasswordValid = password === user.password
+
+        if (isPasswordValid) {
+            user.password = await bcrypt.hash(password, 10)
+            await user.save()
+        }
+    }
 
     if (!isPasswordValid) {
         return res.status(400).json({
@@ -88,7 +119,7 @@ async function loginUserController(req, res) {
         { expiresIn: "1d" }
     )
 
-    res.cookie("token", token)
+    res.cookie("token", token, authCookieOptions)
     res.status(200).json({
         message: "User loggedIn successfully.",
         user: {
@@ -112,7 +143,7 @@ async function logoutUserController(req, res) {
         await tokenBlacklistModel.create({ token })
     }
 
-    res.clearCookie("token")
+    res.clearCookie("token", clearCookieOptions)
 
     res.status(200).json({
         message: "User logged out successfully"

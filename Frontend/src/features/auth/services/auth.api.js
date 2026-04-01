@@ -1,8 +1,9 @@
 import axios from "axios"
 
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
 
 const api = axios.create({
-    baseURL: "http://localhost:3000",
+    baseURL: apiBaseURL,
     withCredentials: true
 })
 
@@ -60,7 +61,11 @@ export async function getMe() {
         return response.data
 
     } catch (err) {
-        console.log(err)
+        if (err?.response?.status === 401) {
+            return null
+        }
+
+        throw err
     }
 
 }
