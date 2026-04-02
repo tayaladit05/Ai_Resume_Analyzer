@@ -4,16 +4,20 @@ const cors = require("cors")
 
 const app = express()
 
+const normalizeOrigin = (origin = "") => origin.trim().replace(/\/+$/, "")
+
 const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
     .split(",")
-    .map((origin) => origin.trim())
+    .map((origin) => normalizeOrigin(origin))
     .filter(Boolean)
 
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        const requestOrigin = normalizeOrigin(origin || "")
+
+        if (!origin || allowedOrigins.includes(requestOrigin)) {
             return callback(null, true)
         }
 

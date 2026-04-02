@@ -32,6 +32,14 @@ COOKIE_SECURE=true
 COOKIE_SAME_SITE=none
 ```
 
+Use exact frontend origins in `FRONTEND_URL` (comma-separated if needed), for example:
+
+```env
+FRONTEND_URL=https://ai-resume-analyzer-3e1s.vercel.app,https://ai-resume-analyzer.vercel.app
+```
+
+Do not use `http://localhost:5173` in production backend env.
+
 5. Deploy and confirm health check:
 
 ```text
@@ -64,6 +72,8 @@ dist
 ```env
 VITE_API_BASE_URL=https://<your-render-domain>
 ```
+
+Do not leave `VITE_API_BASE_URL` empty for production deploy.
 
 5. Deploy.
 
