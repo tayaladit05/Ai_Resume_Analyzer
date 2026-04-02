@@ -25,6 +25,7 @@ const Login = () => {
     return (
         <main>
             <div className="form-container">
+                <p className='auth-brand'>ResumeIQ</p>
                 <h1>Login</h1>
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">

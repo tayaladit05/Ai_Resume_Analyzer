@@ -2,10 +2,12 @@ import React, { useState, useRef } from 'react'
 import "../style/home.scss"
 import { useInterview } from '../hooks/useInterview.js'
 import { useNavigate } from 'react-router'
+import { useAuth } from '../../auth/hooks/useAuth.js'
 
 const Home = () => {
 
     const { loading, generateReport,reports } = useInterview()
+    const { handleLogout } = useAuth()
     const [ jobDescription, setJobDescription ] = useState("")
     const [ selfDescription, setSelfDescription ] = useState("")
     const [ toast, setToast ] = useState(null)
@@ -57,11 +59,20 @@ const Home = () => {
         }, 700)
     }
 
+    const handleLogoutClick = async () => {
+        await handleLogout()
+        navigate('/login')
+    }
+
     return (
         <div className='home-page'>
 
             {/* Page Header */}
             <header className='page-header'>
+                <div className='page-header__top'>
+                    <p className='brand-mark'>ResumeIQ</p>
+                    <button type='button' className='logout-btn' onClick={handleLogoutClick}>Logout</button>
+                </div>
                 <h1>Create Your Custom <span className='highlight'>Interview Plan</span></h1>
                 <p>Let our AI analyze the job requirements and your unique profile to build a winning strategy.</p>
             </header>
@@ -187,6 +198,7 @@ const Home = () => {
 
             {/* Page Footer */}
             <footer className='page-footer'>
+                <p className='page-footer__brand'>ResumeIQ</p>
                 <a href='#'>Privacy Policy</a>
                 <a href='#'>Terms of Service</a>
                 <a href='#'>Help Center</a>
