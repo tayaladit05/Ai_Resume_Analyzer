@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const envApiBaseURL = import.meta.env.VITE_API_BASE_URL?.trim()
+const normalizeApiBaseURL = (value = "") => value.trim().replace(/\/+$/, "").replace(/\/api$/, "")
+
+const envApiBaseURL = normalizeApiBaseURL(import.meta.env.VITE_API_BASE_URL || "")
 const apiBaseURL = envApiBaseURL || (import.meta.env.DEV ? "http://localhost:3000" : "")
 
 if (import.meta.env.PROD && !envApiBaseURL) {
