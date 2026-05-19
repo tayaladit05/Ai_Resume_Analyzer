@@ -3,7 +3,7 @@ import axios from "axios"
 const normalizeApiBaseURL = (value = "") => value.trim().replace(/\/+$/, "").replace(/\/api$/, "")
 
 const envApiBaseURL = normalizeApiBaseURL(import.meta.env.VITE_API_BASE_URL || "")
-const apiBaseURL = envApiBaseURL || (import.meta.env.DEV ? "http://localhost:3000" : "")
+const apiBaseURL = envApiBaseURL || (import.meta.env.DEV ? "http://localhost:5000" : "")
 
 if (import.meta.env.PROD && !envApiBaseURL) {
     console.warn("VITE_API_BASE_URL is not set. API calls will use same-origin URLs in production.")
