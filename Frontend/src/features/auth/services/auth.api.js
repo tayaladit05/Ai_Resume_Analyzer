@@ -14,6 +14,14 @@ const api = axios.create({
     withCredentials: true
 })
 
+// debug: show resolved API base URL at runtime
+try {
+    // eslint-disable-next-line no-console
+    console.log("Resolved API base URL:", api.defaults.baseURL)
+} catch (e) {
+    // ignore in envs without console
+}
+
 export async function register({ username, email, password }) {
 
     try {
